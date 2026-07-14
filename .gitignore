@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Local env files (never commit secrets)
+.env
+.env.local
+frontend/.env.local
+
+# SQLite local DB
+*.db
+backend/customers.db
+api/customers.db
+
+# OS
+.DS_Store
+Thumbs.db
