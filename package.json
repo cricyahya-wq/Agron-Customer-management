@@ -4,6 +4,9 @@
   "description": "Agron Customers backend serverless functions",
   "private": true,
   "type": "commonjs",
+  "scripts": {
+    "vercel-build": "npm install --prefix frontend && npm run build --prefix frontend"
+  },
   "dependencies": {
     "@libsql/client": "^0.14.0",
     "cors": "^2.8.6",
