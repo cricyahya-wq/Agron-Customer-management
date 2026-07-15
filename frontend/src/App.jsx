@@ -227,14 +227,15 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
       const isEdit = !!editCustomer?.id;
       const url = isEdit ? `${API_URL}/customers/${editCustomer.id}` : `${API_URL}/customers`;
       const method = isEdit ? 'PUT' : 'POST';
-      
+
+      // api/index.js expects these exact field names
       const payload = {
-        name: form.customer_details,
-        phone: form.phone_number,
-        cropType: form.crop_type,
-        area: form.area_of_crop,
-        season: form.season,
-        location: form.location === 'Other' ? form.other_location.trim() : form.location
+        customer_details: form.customer_details,
+        phone_number:     form.phone_number,
+        crop_type:        form.crop_type,
+        area_of_crop:     form.area_of_crop,
+        season:           form.season,
+        location:         form.location === 'Other' ? form.other_location.trim() : form.location,
       };
 
       const res = await fetchAPI(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -383,56 +384,23 @@ export default function App() {
     try {
       const [cR, sR, cgR, sgR, lgR] = await Promise.all([
         fetchAPI(`${API_URL}/customers`),
-        fetchAPI(`${API_URL}/customers/stats`),
-        fetchAPI(`${API_URL}/customers/grouped?by=crop`),
-        fetchAPI(`${API_URL}/customers/grouped?by=season`),
-        fetchAPI(`${API_URL}/customers/grouped?by=location`),
+        fetchAPI(`${API_URL}/stats`),
+        fetchAPI(`${API_URL}/customers/grouped/crop_type`),
+        fetchAPI(`${API_URL}/customers/grouped/season`),
+        fetchAPI(`${API_URL}/customers/grouped/location`),
       ]);
       const [cJ, sJ, cgJ, sgJ, lgJ] = await Promise.all([cR.json(), sR.json(), cgR.json(), sgR.json(), lgR.json()]);
-      
-      if (cJ.data) {
-        // Map backend canonical fields to frontend expected fields
-        const mappedCustomers = cJ.data.map(c => ({
-          ...c,
-          customer_details: c.name || c.customer_details,
-          phone_number: c.phone || c.phone_number,
-          crop_type: c.cropType || c.crop_type,
-          area_of_crop: c.area || c.area_of_crop,
-        }));
-        setCustomers(mappedCustomers);
-        
-        if (sJ.success) {
-          const recent = [...mappedCustomers]
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-            .slice(0, 5);
-            
-          setStats({
-            totalCustomers: sJ.total,
-            uniqueCrops: sJ.uniqueCrops,
-            uniqueLocations: sJ.uniqueLocations,
-            uniqueSeasons: sJ.uniqueSeasons,
-            recentlyAdded: recent
-          });
-        }
-      } else if (sJ.success) {
-        setStats({
-          totalCustomers: sJ.total,
-          uniqueCrops: sJ.uniqueCrops,
-          uniqueLocations: sJ.uniqueLocations,
-          uniqueSeasons: sJ.uniqueSeasons,
-          recentlyAdded: []
-        });
+
+      if (cJ.data) setCustomers(cJ.data);
+
+      if (sJ.data) {
+        setStats(sJ.data);
       }
 
-      const formatGroup = (grp, field) => {
-        if (!grp) return [];
-        return Object.entries(grp).map(([k, v]) => ({ [field]: k, count: v.length }));
-      };
-
       setGrouped({
-        crop_type: formatGroup(cgJ.groups, 'crop_type'),
-        season: formatGroup(sgJ.groups, 'season'),
-        location: formatGroup(lgJ.groups, 'location')
+        crop_type: cgJ.data || [],
+        season:    sgJ.data || [],
+        location:  lgJ.data || [],
       });
     } catch {
       showToast('Could not connect to server.', 'error');

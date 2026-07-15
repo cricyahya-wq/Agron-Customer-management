@@ -2,6 +2,7 @@
 node_modules/
 frontend/node_modules/
 backend/node_modules/
+agron-customers/node_modules/
 
 # Build output
 frontend/dist/
@@ -10,12 +11,17 @@ frontend/dist/
 .env
 .env.local
 frontend/.env.local
+backend/.env
 
 # SQLite local DB
 *.db
 backend/customers.db
 api/customers.db
+agron-customers/data/customers.json
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Editor
+.vscode/

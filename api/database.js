@@ -16,8 +16,7 @@ const db = createClient({
 });
 
 /**
- * Initialize the database: create table if it doesn't exist and seed
- * sample data if the table is empty.
+ * Initialize the database: create table if it doesn't exist.
  */
 async function initDatabase() {
   await db.execute(`
@@ -31,27 +30,6 @@ async function initDatabase() {
       location TEXT
     )
   `);
-
-  const result = await db.execute('SELECT COUNT(*) AS count FROM customers');
-  const count = result.rows[0].count;
-
-  if (count === 0) {
-    console.log('Seeding initial data...');
-    const sampleData = [
-      ['John Doe',       '555-0100', 'Wheat',     '50 acres',  'Kharif', 'Punjab'],
-      ['Jane Smith',     '555-0101', 'Rice',      '120 acres', 'Rabi',   'Haryana'],
-      ['Bob Johnson',    '555-0102', 'Maize',     '30 acres',  'Kharif', 'Punjab'],
-      ['Alice Brown',    '555-0103', 'Wheat',     '45 acres',  'Rabi',   'Uttar Pradesh'],
-      ['Charlie Davis',  '555-0104', 'Sugarcane', '80 acres',  'Zaid',   'Maharashtra'],
-    ];
-
-    for (const row of sampleData) {
-      await db.execute({
-        sql: 'INSERT INTO customers (customer_details, phone_number, crop_type, area_of_crop, season, location) VALUES (?,?,?,?,?,?)',
-        args: row,
-      });
-    }
-  }
 }
 
 // Run init once when the module loads (Vercel reuses warm instances)

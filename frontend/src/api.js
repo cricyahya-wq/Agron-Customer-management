@@ -4,9 +4,7 @@
  * header to every outgoing API request.
  */
 
-const CONFIG = {
-  token: 'agron_secure_token_2024',
-};
+const TOKEN = import.meta.env.VITE_API_TOKEN || 'agron_secure_token_2024';
 
 /**
  * Drop-in replacement for fetch() that injects the Bearer token.
@@ -17,7 +15,7 @@ const CONFIG = {
  */
 export async function fetchAPI(url, options = {}) {
   const headers = {
-    Authorization: `Bearer ${CONFIG.token}`,
+    Authorization: `Bearer ${TOKEN}`,
     ...(options.headers || {}),
   };
 
