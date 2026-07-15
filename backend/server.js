@@ -103,6 +103,29 @@ app.get('/api/customers/grouped/:field', (req, res) => {
     });
 });
 
+// Compatibility routes for direct grouping fields (e.g. /api/crop_type)
+app.get('/api/:field', (req, res, next) => {
+    const field = req.params.field;
+    const allowedFields = ['crop_type', 'season', 'location'];
+    if (!allowedFields.includes(field)) {
+        return next();
+    }
+    const query = `
+        SELECT ${field}, COUNT(id) as count 
+        FROM customers 
+        GROUP BY ${field} 
+        ORDER BY count DESC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ data: rows });
+    });
+});
+
 // Delete a customer
 app.delete('/api/customers/:id', (req, res) => {
     const id = req.params.id;

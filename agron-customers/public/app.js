@@ -312,3 +312,32 @@ function setFormMsg(id, msg, isError) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadDashboard();
+
+// ── Theme Toggle ──────────────────────────────────────────────────────────────
+const themeBtn = document.getElementById('theme-toggle');
+if (themeBtn) {
+  const savedTheme = localStorage.getItem('agronTheme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    themeBtn.classList.add('light');
+  }
+
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    themeBtn.classList.toggle('light');
+    
+    if (document.body.classList.contains('light-mode')) {
+      localStorage.setItem('agronTheme', 'light');
+    } else {
+      localStorage.setItem('agronTheme', 'dark');
+    }
+  });
+}
+const themeToggle = document.getElementById('theme-toggle');
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+});
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+}

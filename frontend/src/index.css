@@ -941,3 +941,89 @@ body {
   .card { box-shadow: none; border: 1px solid #ccc; }
   body  { background: #fff; }
 }
+
+/* Custom Premium Theme Toggle Switch */
+.theme-toggle {
+  background: #6B7280; /* Dark gray track */
+  border: none;
+  border-radius: 30px; /* Pill shape */
+  width: 64px;
+  height: 32px;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--border-focus);
+}
+
+.theme-toggle-track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0 3px;
+}
+
+.theme-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+.theme-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Light Mode state (sun active, right) */
+.theme-toggle.light .theme-toggle-thumb {
+  transform: translateX(32px); /* 64 - 26 - 6 */
+}
+
+.theme-toggle.light .theme-icon.sun {
+  color: #4B5563; /* Gray icon inside white active thumb */
+}
+
+.theme-toggle.light .theme-icon.moon {
+  color: #D1D5DB; /* Light gray when inactive */
+}
+
+/* Dark Mode state (moon active, left) */
+.theme-toggle.dark .theme-toggle-thumb {
+  transform: translateX(0);
+}
+
+.theme-toggle.dark .theme-icon.moon {
+  color: #4B5563; /* Gray icon inside white active thumb */
+}
+
+.theme-toggle.dark .theme-icon.sun {
+  color: #D1D5DB; /* Light gray when inactive */
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 26px;
+  height: 26px;
+  background-color: #FFFFFF;
+  border-radius: 8px; /* Rounded square slider as requested */
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}

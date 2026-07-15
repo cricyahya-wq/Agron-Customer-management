@@ -92,6 +92,23 @@ app.get('/api/customers/grouped/:field', async (req, res) => {
   }
 });
 
+// Compatibility routes for direct grouping fields (e.g. /api/crop_type)
+app.get('/api/:field', async (req, res, next) => {
+  const field = req.params.field;
+  const allowedFields = ['crop_type', 'season', 'location'];
+  if (!allowedFields.includes(field)) {
+    return next();
+  }
+  try {
+    const result = await db.execute(
+      `SELECT ${field}, COUNT(id) as count FROM customers GROUP BY ${field} ORDER BY count DESC`
+    );
+    res.json({ data: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Delete a customer ─────────────────────────────────────────────────────────
 app.delete('/api/customers/:id', async (req, res) => {
   try {

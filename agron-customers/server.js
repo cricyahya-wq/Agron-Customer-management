@@ -50,7 +50,7 @@ function normalizeRow(row) {
   };
   return {
     id: uuidv4(),
-    name: get('name', 'customer_name', 'Customer Name', 'customerName'),
+    name: get('name', 'customer_name', 'customer_details', 'Customer Name', 'customerName'),
     phone: get('phone', 'phone_number', 'Phone Number', 'phoneNumber', 'mobile'),
     cropType: get('cropType', 'crop_type', 'Crop Type', 'crop'),
     area: get('area', 'area_of_crop', 'Area of Crop', 'areaOfCrop', 'acres'),

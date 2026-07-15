@@ -48,8 +48,7 @@ const LOCATION_OPTIONS = [
 ];
 
 const EMPTY_FORM = {
-  customer_details: '', phone_number: '', crop_type: '',
-  area_of_crop: '', season: 'Summer', location: ''
+  customer_details: '', phone_number: '', crop_type: '', area_of_crop: '', season: 'Summer', location: '', other_location: ''
 };
 
 function getCropClass(crop) {
@@ -210,6 +209,7 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
     if (!form.crop_type)   e.crop_type   = 'Required';
     if (!form.area_of_crop?.trim()) e.area_of_crop = 'Required';
     if (!form.location)    e.location    = 'Required';
+    else if (form.location === 'Other' && !form.other_location?.trim()) e.other_location = 'Required';
     return e;
   };
 
@@ -227,10 +227,20 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
       const isEdit = !!editCustomer?.id;
       const url = isEdit ? `${API_URL}/customers/${editCustomer.id}` : `${API_URL}/customers`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetchAPI(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      
+      const payload = {
+        name: form.customer_details,
+        phone: form.phone_number,
+        cropType: form.crop_type,
+        area: form.area_of_crop,
+        season: form.season,
+        location: form.location === 'Other' ? form.other_location.trim() : form.location
+      };
+
+      const res = await fetchAPI(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await res.json();
       if (res.ok) { onSaved(isEdit ? 'updated' : 'added'); onClose(); }
-      else         setErrors({ _global: json.error });
+      else         setErrors({ _global: json.error || json.message || 'Error saving customer.' });
     } catch {
       setErrors({ _global: 'Server error.' });
     } finally {
@@ -294,9 +304,19 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
                 <select name="location" value={form.location} onChange={handleChange}
                   className={`mform-select ${errors.location ? 'err' : ''}`}>
                   <option value="">Select…</option>
-                  {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                  {allLocations.filter(l => l !== 'Other').map(l => <option key={l} value={l}>{l}</option>)}
+                  <option value="Other">Other</option>
                 </select>
                 {errors.location && <div className="mform-error">{errors.location}</div>}
+                
+                {form.location === 'Other' && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <input name="other_location" placeholder="Enter city name..." 
+                      value={form.other_location} onChange={handleChange}
+                      className={`mform-input ${errors.other_location ? 'err' : ''}`} />
+                    {errors.other_location && <div className="mform-error">{errors.other_location}</div>}
+                  </div>
+                )}
               </div>
             </div>
           </form>
@@ -352,7 +372,7 @@ export default function App() {
 
   // ── Toast ──────────────────────────────────────────────────────
   const showToast = useCallback((message, type = 'success') => {
-    const id = Date.now();
+    const id = `${Date.now()}-${Math.random()}`;
     setToasts(t => [...t, { id, message, type }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
   }, []);
@@ -363,15 +383,57 @@ export default function App() {
     try {
       const [cR, sR, cgR, sgR, lgR] = await Promise.all([
         fetchAPI(`${API_URL}/customers`),
-        fetchAPI(`${API_URL}/stats`),
-        fetchAPI(`${API_URL}/customers/grouped/crop_type`),
-        fetchAPI(`${API_URL}/customers/grouped/season`),
-        fetchAPI(`${API_URL}/customers/grouped/location`),
+        fetchAPI(`${API_URL}/customers/stats`),
+        fetchAPI(`${API_URL}/customers/grouped?by=crop`),
+        fetchAPI(`${API_URL}/customers/grouped?by=season`),
+        fetchAPI(`${API_URL}/customers/grouped?by=location`),
       ]);
       const [cJ, sJ, cgJ, sgJ, lgJ] = await Promise.all([cR.json(), sR.json(), cgR.json(), sgR.json(), lgR.json()]);
-      if (cJ.data)  setCustomers(cJ.data);
-      if (sJ.data)  setStats(sJ.data);
-      setGrouped({ crop_type: cgJ.data || [], season: sgJ.data || [], location: lgJ.data || [] });
+      
+      if (cJ.data) {
+        // Map backend canonical fields to frontend expected fields
+        const mappedCustomers = cJ.data.map(c => ({
+          ...c,
+          customer_details: c.name || c.customer_details,
+          phone_number: c.phone || c.phone_number,
+          crop_type: c.cropType || c.crop_type,
+          area_of_crop: c.area || c.area_of_crop,
+        }));
+        setCustomers(mappedCustomers);
+        
+        if (sJ.success) {
+          const recent = [...mappedCustomers]
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+            .slice(0, 5);
+            
+          setStats({
+            totalCustomers: sJ.total,
+            uniqueCrops: sJ.uniqueCrops,
+            uniqueLocations: sJ.uniqueLocations,
+            uniqueSeasons: sJ.uniqueSeasons,
+            recentlyAdded: recent
+          });
+        }
+      } else if (sJ.success) {
+        setStats({
+          totalCustomers: sJ.total,
+          uniqueCrops: sJ.uniqueCrops,
+          uniqueLocations: sJ.uniqueLocations,
+          uniqueSeasons: sJ.uniqueSeasons,
+          recentlyAdded: []
+        });
+      }
+
+      const formatGroup = (grp, field) => {
+        if (!grp) return [];
+        return Object.entries(grp).map(([k, v]) => ({ [field]: k, count: v.length }));
+      };
+
+      setGrouped({
+        crop_type: formatGroup(cgJ.groups, 'crop_type'),
+        season: formatGroup(sgJ.groups, 'season'),
+        location: formatGroup(lgJ.groups, 'location')
+      });
     } catch {
       showToast('Could not connect to server.', 'error');
     } finally {
@@ -492,9 +554,33 @@ export default function App() {
         </nav>
 
         <div className="header-actions">
-          <button className="icon-btn" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? 'Light' : 'Dark'}
+          <button
+            className={`theme-toggle ${theme}`}
+            title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            aria-label="Toggle Theme"
+          >
+            <div className="theme-toggle-track">
+              <span className="theme-icon moon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              </span>
+              <span className="theme-icon sun">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              </span>
+              <div className="theme-toggle-thumb"></div>
+            </div>
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => { setEditCust(null); setShowForm(true); }}>
             Add Customer
