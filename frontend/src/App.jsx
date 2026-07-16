@@ -40,7 +40,7 @@ const CHART_PALETTE = [
 ];
 
 const CROP_OPTIONS     = ['Wheat','Rice','Cotton','Maize','Sugarcane','Barley','Sorghum','Sunflower','Other'];
-const SEASON_OPTIONS   = ['Summer','Winter','Autumn','Spring','Kharif','Rabi','Zaid'];
+const SEASON_OPTIONS   = ['Summer','Winter','Autumn','Spring'];
 const LOCATION_OPTIONS = [
   'Lahore','Karachi','Islamabad','Rawalpindi','Faisalabad','Multan',
   'Gujranwala','Peshawar','Quetta','Sialkot','Hyderabad','Bahawalpur',
@@ -48,7 +48,7 @@ const LOCATION_OPTIONS = [
 ];
 
 const EMPTY_FORM = {
-  customer_details: '', phone_number: '', crop_type: '', area_of_crop: '', season: 'Summer', location: '', other_location: ''
+  customer_details: '', phone_number: '', crop_type: '', other_crop_type: '', area_of_crop: '', season: 'Summer', location: '', other_location: ''
 };
 
 function getCropClass(crop) {
@@ -261,13 +261,22 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
   const validate = () => {
     const e = {};
     if (!form.customer_details?.trim())  e.customer_details = 'Required';
+    else if (!/^[A-Za-z\s]{1,50}$/.test(form.customer_details)) e.customer_details = 'Max 50 alphabets only';
+    
     if (!form.phone_number?.trim())      e.phone_number = 'Required';
-    else if (!/^\d{10,15}$/.test(form.phone_number.replace(/[\s\-+]/g, '')))
-      e.phone_number = '10–15 digits';
+    else if (!/^\d{1,11}$/.test(form.phone_number)) e.phone_number = 'Max 11 digits only';
+    
     if (!form.crop_type)   e.crop_type   = 'Required';
+    else if (form.crop_type === 'Other' && !form.other_crop_type?.trim()) e.other_crop_type = 'Required';
+    else if (form.crop_type === 'Other' && form.other_crop_type.length > 50) e.other_crop_type = 'Max 50 characters';
+    
     if (!form.area_of_crop?.trim()) e.area_of_crop = 'Required';
+    else if (!/^\d{1,6}$/.test(form.area_of_crop)) e.area_of_crop = 'Digits only (max 6)';
+    
     if (!form.location)    e.location    = 'Required';
     else if (form.location === 'Other' && !form.other_location?.trim()) e.other_location = 'Required';
+    else if (form.location === 'Other' && form.other_location.length > 50) e.other_location = 'Max 50 characters';
+    
     return e;
   };
 
@@ -290,7 +299,7 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
       const payload = {
         customer_details: form.customer_details,
         phone_number:     form.phone_number,
-        crop_type:        form.crop_type,
+        crop_type:        form.crop_type === 'Other' ? form.other_crop_type.trim() : form.crop_type,
         area_of_crop:     form.area_of_crop,
         season:           form.season,
         location:         form.location === 'Other' ? form.other_location.trim() : form.location,
@@ -339,12 +348,22 @@ function FormModal({ editCustomer, onClose, onSaved, uniqueCrops, uniqueLocation
                 <select name="crop_type" value={form.crop_type} onChange={handleChange}
                   className={`mform-select ${errors.crop_type ? 'err' : ''}`}>
                   <option value="">Select…</option>
-                  {allCrops.map(c => <option key={c} value={c}>{c}</option>)}
+                  {allCrops.filter(c => c !== 'Other').map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="Other">Other</option>
                 </select>
                 {errors.crop_type && <div className="mform-error">{errors.crop_type}</div>}
+                
+                {form.crop_type === 'Other' && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <input name="other_crop_type" placeholder="Enter crop name..." 
+                      value={form.other_crop_type || ''} onChange={handleChange}
+                      className={`mform-input ${errors.other_crop_type ? 'err' : ''}`} />
+                    {errors.other_crop_type && <div className="mform-error">{errors.other_crop_type}</div>}
+                  </div>
+                )}
               </div>
               <div className="mform-field">
-                <label className="mform-label">Area</label>
+                <label className="mform-label">Crop Area</label>
                 <input name="area_of_crop" value={form.area_of_crop} onChange={handleChange}
                   className={`mform-input ${errors.area_of_crop ? 'err' : ''}`} />
                 {errors.area_of_crop && <div className="mform-error">{errors.area_of_crop}</div>}
