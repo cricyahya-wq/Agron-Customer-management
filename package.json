@@ -5,12 +5,14 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "vercel-build": "npm install --prefix frontend && npm run build --prefix frontend"
+    "vercel-build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
     "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "multer": "^2.2.0"
   }
 }

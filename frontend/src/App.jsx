@@ -18,25 +18,25 @@ const PAGE_SIZE = 10;
 
 // ── Colour helpers ────────────────────────────────────────────────
 const CROP_COLOURS = {
-  wheat:      { cls: 'crop-wheat',     chart: '#F59E0B' },
-  rice:       { cls: 'crop-rice',      chart: '#22C55E' },
-  cotton:     { cls: 'crop-cotton',    chart: '#3B82F6' },
-  maize:      { cls: 'crop-maize',     chart: '#F97316' },
-  sugarcane:  { cls: 'crop-sugarcane', chart: '#EC4899' },
+  wheat:      { cls: 'crop-wheat',     chart: '#198754' },
+  rice:       { cls: 'crop-rice',      chart: '#20c997' },
+  cotton:     { cls: 'crop-cotton',    chart: '#0d6efd' },
+  maize:      { cls: 'crop-maize',     chart: '#fd7e14' },
+  sugarcane:  { cls: 'crop-sugarcane', chart: '#d63384' },
 };
 const SEASON_COLOURS = {
-  summer:  { cls: 'season-summer', chart: '#F59E0B' },
-  winter:  { cls: 'season-winter', chart: '#3B82F6' },
-  autumn:  { cls: 'season-autumn', chart: '#EA580C' },
-  spring:  { cls: 'season-spring', chart: '#22C55E' },
-  kharif:  { cls: 'season-kharif', chart: '#10B981' },
-  rabi:    { cls: 'season-rabi',   chart: '#6366F1' },
-  zaid:    { cls: 'season-zaid',   chart: '#EF4444' },
+  summer:  { cls: 'season-summer', chart: '#fd7e14' },
+  winter:  { cls: 'season-winter', chart: '#0d6efd' },
+  autumn:  { cls: 'season-autumn', chart: '#d35400' },
+  spring:  { cls: 'season-spring', chart: '#20c997' },
+  kharif:  { cls: 'season-kharif', chart: '#198754' },
+  rabi:    { cls: 'season-rabi',   chart: '#6f42c1' },
+  zaid:    { cls: 'season-zaid',   chart: '#dc3545' },
 };
 const CHART_PALETTE = [
-  '#16A34A','#3B82F6','#F59E0B','#EC4899','#8B5CF6',
-  '#06B6D4','#F97316','#6366F1','#10B981','#EAB308',
-  '#84CC16','#EF4444',
+  '#0d6efd','#0dcaf0','#198754','#ffc107','#fd7e14',
+  '#d63384','#6f42c1','#dc3545','#20c997','#6610f2',
+  '#052c65','#0aa2c0',
 ];
 
 const CROP_OPTIONS     = ['Wheat','Rice','Cotton','Maize','Sugarcane','Barley','Sorghum','Sunflower','Other'];
@@ -362,6 +362,9 @@ export default function App() {
   const [showForm,   setShowForm]   = useState(false);
   const [deleteCust, setDeleteCust] = useState(null);
 
+  // CSV Upload
+  const [csvUploading, setCsvUploading] = useState(false);
+
   // Toasts
   const [toasts, setToasts] = useState([]);
 
@@ -391,16 +394,44 @@ export default function App() {
       ]);
       const [cJ, sJ, cgJ, sgJ, lgJ] = await Promise.all([cR.json(), sR.json(), cgR.json(), sgR.json(), lgR.json()]);
 
-      if (cJ.data) setCustomers(cJ.data);
+      if (cJ.data) {
+        const normalized = cJ.data.map(c => ({
+          ...c,
+          id: c.id,
+          customer_details: c.customer_details || c.name || c.Name || c['Customer Name'] || '',
+          phone_number: c.phone_number || c.phone || c.Phone || c['Phone Number'] || '',
+          crop_type: c.crop_type || c.cropType || c.Crop || c['Crop Type'] || '',
+          area_of_crop: c.area_of_crop || c.area || c.Area || c['Area of Crop'] || '',
+          season: c.season || c.Season || '',
+          location: c.location || c.Location || ''
+        }));
+        setCustomers(normalized);
+      }
 
       if (sJ.data) {
         setStats(sJ.data);
       }
 
+      // Also normalize the stats.recentlyAdded if it exists
+      if (sJ.data && sJ.data.recentlyAdded) {
+        setStats(prev => ({
+          ...prev,
+          recentlyAdded: prev.recentlyAdded.map(c => ({
+            ...c,
+            customer_details: c.customer_details || c.name || c.Name || '',
+            phone_number: c.phone_number || c.phone || c.Phone || '',
+            crop_type: c.crop_type || c.cropType || c.Crop || '',
+            area_of_crop: c.area_of_crop || c.area || c.Area || '',
+            season: c.season || c.Season || '',
+            location: c.location || c.Location || ''
+          }))
+        }));
+      }
+
       setGrouped({
-        crop_type: cgJ.data || [],
-        season:    sgJ.data || [],
-        location:  lgJ.data || [],
+        crop_type: cgJ.data || cgJ.groups?.byCrop || [],
+        season:    sgJ.data || sgJ.groups?.bySeason || [],
+        location:  lgJ.data || lgJ.groups?.byLocation || [],
       });
     } catch {
       showToast('Could not connect to server.', 'error');
@@ -439,6 +470,34 @@ export default function App() {
   const paginated  = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => setPage(1), [search, filterCrop, filterSeason, filterLoc, sortBy]);
+
+  // ── CSV Upload ─────────────────────────────────────────────────
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // reset so same file can be re-uploaded
+    setCsvUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_URL}/customers/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_API_TOKEN || 'agron_secure_token_2024'}` },
+        body: formData,
+      });
+      const json = await res.json();
+      if (res.ok) {
+        showToast(`${json.message || `Imported ${json.imported} customers`} ✅`, 'success');
+        fetchAll();
+      } else {
+        showToast(json.error || 'CSV upload failed.', 'error');
+      }
+    } catch {
+      showToast('CSV upload error.', 'error');
+    } finally {
+      setCsvUploading(false);
+    }
+  };
 
   // ── Delete ─────────────────────────────────────────────────────
   const handleDelete = async () => {
@@ -547,7 +606,7 @@ export default function App() {
                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                 </svg>
               </span>
-              <div className="theme-toggle-thumb"></div>
+              <span className="theme-toggle-thumb"></span>
             </div>
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => { setEditCust(null); setShowForm(true); }}>
