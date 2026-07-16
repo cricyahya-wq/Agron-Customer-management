@@ -87,12 +87,9 @@ const AGRON_COLORS = {
     "Other": "#eef3f6"
   },
   seasons: {
-    "Kharif (Summer)": "#cfc62d",
-    "Zaid (Spring)": "#9bb23b",
-    "Year-Round": "#64822c",
-    "Rabi (Winter)": "#456129",
+    "Summer": "#cfc62d",
     "Winter": "#9bb6be",
-    "Summer": "#f5ef2c",
+    "Autumn": "#f5ef2c",
     "Spring": "#c3c975"
   },
   locations: {
@@ -105,6 +102,18 @@ const AGRON_COLORS = {
     "Other locations": "#9bb6be"
   }
 };
+
+function normalizeSeason(s) {
+  if (!s) return 'Summer';
+  const low = s.toLowerCase();
+  if (low.includes('kharif') || low.includes('summer')) return 'Summer';
+  if (low.includes('rabi') || low.includes('winter')) return 'Winter';
+  if (low.includes('zaid') || low.includes('spring')) return 'Spring';
+  if (low.includes('autum')) return 'Autumn';
+  if (low.includes('year-round')) return 'Summer';
+  // Attempt to capitalize correctly if it's something else
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 
 function getColorForLabel(field, label, index) {
   let category;
@@ -479,7 +488,7 @@ export default function App() {
           phone_number: c.phone_number || c.phone || c.Phone || c['Phone Number'] || '',
           crop_type: c.crop_type || c.cropType || c.Crop || c['Crop Type'] || '',
           area_of_crop: c.area_of_crop || c.area || c.Area || c['Area of Crop'] || '',
-          season: c.season || c.Season || '',
+          season: normalizeSeason(c.season || c.Season),
           location: c.location || c.Location || ''
         }));
         setCustomers(normalized);
@@ -499,15 +508,23 @@ export default function App() {
             phone_number: c.phone_number || c.phone || c.Phone || '',
             crop_type: c.crop_type || c.cropType || c.Crop || '',
             area_of_crop: c.area_of_crop || c.area || c.Area || '',
-            season: c.season || c.Season || '',
+            season: normalizeSeason(c.season || c.Season),
             location: c.location || c.Location || ''
           }))
         }));
       }
 
+      const rawSeasonGroup = sgJ.data || sgJ.groups?.bySeason || [];
+      const seasonMap = {};
+      rawSeasonGroup.forEach(d => {
+        const norm = normalizeSeason(d.season);
+        seasonMap[norm] = (seasonMap[norm] || 0) + d.count;
+      });
+      const groupedSeason = Object.entries(seasonMap).map(([season, count]) => ({ season, count }));
+
       setGrouped({
         crop_type: cgJ.data || cgJ.groups?.byCrop || [],
-        season:    sgJ.data || sgJ.groups?.bySeason || [],
+        season:    groupedSeason,
         location:  lgJ.data || lgJ.groups?.byLocation || [],
       });
     } catch {
