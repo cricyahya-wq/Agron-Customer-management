@@ -61,20 +61,40 @@ function getInitials(name = '') {
   return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
 }
 
+// ── Unified Professional Palettes for Charts ──────────────────────────
+const PALETTES = {
+  crop_type: [
+    '#198754', '#20c997', '#28a745', '#146c43', '#0f5132', '#34ce57', 
+    '#48d166', '#5dd879', '#74df8b', '#8ae59e', '#a1ecb1', '#b7f2c4',
+    '#115e59', '#0d9488', '#0f766e', '#14b8a6', '#2dd4bf', '#5eead4'
+  ],
+  season: [
+    '#fd7e14', '#e65100', '#ff8f00', '#ffb300', '#ffca28', '#ffd54f',
+    '#d35400', '#e67e22', '#f39c12', '#f1c40f', '#f5b041', '#f8c471'
+  ],
+  location: [
+    '#0d6efd', '#0dcaf0', '#0a58ca', '#3d8bfd', '#052c65', '#084298',
+    '#6ea8fe', '#9ec5fe', '#cfe2ff', '#0077b6', '#0096c7', '#48cae4',
+    '#90e0ef', '#ade8f4', '#caf0f8', '#1e3a8a', '#1e40af', '#1d4ed8'
+  ],
+  default: CHART_PALETTE
+};
+
 // ── Chart data builders ───────────────────────────────────────────
 function buildDoughnutData(grouped, field) {
   const labels = grouped.map(d => d[field]);
   const vals   = grouped.map(d => d.count);
-  const bgs    = labels.map((l, i) => {
-    const key = l.toLowerCase();
-    return CROP_COLOURS[key]?.chart || SEASON_COLOURS[key]?.chart || CHART_PALETTE[i % CHART_PALETTE.length];
-  });
+  const palette = PALETTES[field] || PALETTES.default;
+  const bgs = labels.map((_, i) => palette[i % palette.length]);
   return { labels, datasets: [{ data: vals, backgroundColor: bgs, borderWidth: 2, borderColor: '#fff' }] };
 }
+
 function buildBarData(grouped, field, theme) {
   const labels = grouped.map(d => d[field]);
   const vals   = grouped.map(d => d.count);
-  const bgs    = labels.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]);
+  const palette = PALETTES[field] || PALETTES.default;
+  // For bar charts, using the same palette as doughnut creates beautiful monochromatic harmony.
+  const bgs = labels.map((_, i) => palette[i % palette.length]);
   return { labels, datasets: [{ data: vals, backgroundColor: bgs, borderRadius: 5, borderSkipped: false }] };
 }
 
