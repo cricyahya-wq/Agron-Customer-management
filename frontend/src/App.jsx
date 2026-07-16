@@ -62,39 +62,77 @@ function getInitials(name = '') {
 }
 
 // ── Unified Professional Palettes for Charts ──────────────────────────
-const PALETTES = {
-  crop_type: [
-    '#198754', '#20c997', '#28a745', '#146c43', '#0f5132', '#34ce57', 
-    '#48d166', '#5dd879', '#74df8b', '#8ae59e', '#a1ecb1', '#b7f2c4',
-    '#115e59', '#0d9488', '#0f766e', '#14b8a6', '#2dd4bf', '#5eead4'
-  ],
-  season: [
-    '#fd7e14', '#e65100', '#ff8f00', '#ffb300', '#ffca28', '#ffd54f',
-    '#d35400', '#e67e22', '#f39c12', '#f1c40f', '#f5b041', '#f8c471'
-  ],
-  location: [
-    '#0d6efd', '#0dcaf0', '#0a58ca', '#3d8bfd', '#052c65', '#084298',
-    '#6ea8fe', '#9ec5fe', '#cfe2ff', '#0077b6', '#0096c7', '#48cae4',
-    '#90e0ef', '#ade8f4', '#caf0f8', '#1e3a8a', '#1e40af', '#1d4ed8'
-  ],
-  default: CHART_PALETTE
+const AGRON_COLORS = {
+  crops: {
+    "Rice": "#9bb23b",
+    "Lentil": "#5c652b",
+    "Wheat": "#cfc62d",
+    "Citrus": "#f5ef2c",
+    "Chickpea": "#888b2c",
+    "Soybean": "#64822c",
+    "Onion": "#c3c975",
+    "Cotton": "#9bb6be",
+    "Maize": "#cfc62d",
+    "Sugarcane": "#456129",
+    "Sorghum": "#9bb23b",
+    "Mustard": "#f5ef2c",
+    "Barley": "#313b29",
+    "Sunflower": "#cfc62d",
+    "Sesame": "#888b2c",
+    "Mango": "#c3c975",
+    "Tomato": "#556a72",
+    "Potato": "#9bb6be",
+    "Fodder": "#64822c",
+    "Groundnut": "#5c652b",
+    "Other": "#eef3f6"
+  },
+  seasons: {
+    "Kharif (Summer)": "#cfc62d",
+    "Zaid (Spring)": "#9bb23b",
+    "Year-Round": "#64822c",
+    "Rabi (Winter)": "#456129",
+    "Winter": "#9bb6be",
+    "Summer": "#f5ef2c",
+    "Spring": "#c3c975"
+  },
+  locations: {
+    "Multan, Punjab": "#313b29",
+    "Gilgit, GB": "#456129",
+    "Sargodha, Punjab": "#5c652b",
+    "Jhang, Punjab": "#64822c",
+    "Sialkot, Punjab": "#888b2c",
+    "Skardu, GB": "#556a72",
+    "Other locations": "#9bb6be"
+  }
 };
+
+function getColorForLabel(field, label, index) {
+  let category;
+  if (field === 'crop_type' || field === 'crop') category = 'crops';
+  else if (field === 'season') category = 'seasons';
+  else if (field === 'location') category = 'locations';
+  
+  if (category && AGRON_COLORS[category]) {
+    return AGRON_COLORS[category][label] 
+        || AGRON_COLORS[category]['Other'] 
+        || AGRON_COLORS[category]['Other locations']
+        || CHART_PALETTE[index % CHART_PALETTE.length]; 
+  }
+  return CHART_PALETTE[index % CHART_PALETTE.length];
+}
 
 // ── Chart data builders ───────────────────────────────────────────
 function buildDoughnutData(grouped, field) {
   const labels = grouped.map(d => d[field]);
   const vals   = grouped.map(d => d.count);
-  const palette = PALETTES[field] || PALETTES.default;
-  const bgs = labels.map((_, i) => palette[i % palette.length]);
+  const bgs = labels.map((l, i) => getColorForLabel(field, l, i));
   return { labels, datasets: [{ data: vals, backgroundColor: bgs, borderWidth: 2, borderColor: '#fff' }] };
 }
 
 function buildBarData(grouped, field, theme) {
   const labels = grouped.map(d => d[field]);
   const vals   = grouped.map(d => d.count);
-  const palette = PALETTES[field] || PALETTES.default;
-  // For bar charts, using the same palette as doughnut creates beautiful monochromatic harmony.
-  const bgs = labels.map((_, i) => palette[i % palette.length]);
+  const bgs = labels.map((l, i) => getColorForLabel(field, l, i));
   return { labels, datasets: [{ data: vals, backgroundColor: bgs, borderRadius: 5, borderSkipped: false }] };
 }
 
