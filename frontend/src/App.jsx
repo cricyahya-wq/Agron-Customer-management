@@ -492,6 +492,11 @@ export default function App() {
           location: c.location || c.Location || ''
         }));
         setCustomers(normalized);
+        
+        // Correct the uniqueSeasons count to reflect the normalized seasons
+        if (sJ.data) {
+          sJ.data.uniqueSeasons = new Set(normalized.map(c => c.season).filter(Boolean)).size;
+        }
       }
 
       if (sJ.data) {
