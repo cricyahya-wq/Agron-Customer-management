@@ -34,9 +34,7 @@ const SEASON_COLOURS = {
   zaid:    { cls: 'season-zaid',   chart: '#dc3545' },
 };
 const CHART_PALETTE = [
-  '#0d6efd','#0dcaf0','#198754','#ffc107','#fd7e14',
-  '#d63384','#6f42c1','#dc3545','#20c997','#6610f2',
-  '#052c65','#0aa2c0',
+  '#173404','#27500A','#3B6D11','#639922','#97C459','#C0DD97','#EAF3DE',
 ];
 
 const CROP_OPTIONS     = ['Wheat','Rice','Cotton','Maize','Sugarcane','Barley','Sorghum','Sunflower','Other'];
@@ -62,44 +60,56 @@ function getInitials(name = '') {
 }
 
 // ── Unified Professional Palettes for Charts ──────────────────────────
+// Green palette: #173404 (darkest) → #EAF3DE (lightest)
+// Assign darkest to largest segments, lightest to smallest
+const GREEN = ['#173404','#27500A','#3B6D11','#639922','#97C459','#C0DD97','#EAF3DE'];
+
 const AGRON_COLORS = {
   crops: {
-    "Rice": "#9bb23b",
-    "Lentil": "#5c652b",
-    "Wheat": "#cfc62d",
-    "Citrus": "#f5ef2c",
-    "Chickpea": "#888b2c",
-    "Soybean": "#64822c",
-    "Onion": "#c3c975",
-    "Cotton": "#9bb6be",
-    "Maize": "#cfc62d",
-    "Sugarcane": "#456129",
-    "Sorghum": "#9bb23b",
-    "Mustard": "#f5ef2c",
-    "Barley": "#313b29",
-    "Sunflower": "#cfc62d",
-    "Sesame": "#888b2c",
-    "Mango": "#c3c975",
-    "Tomato": "#556a72",
-    "Potato": "#9bb6be",
-    "Fodder": "#64822c",
-    "Groundnut": "#5c652b",
-    "Other": "#eef3f6"
+    "Rice":       GREEN[0],
+    "Wheat":      GREEN[1],
+    "Cotton":     GREEN[2],
+    "Maize":      GREEN[3],
+    "Citrus":     GREEN[4],
+    "Lentil":     GREEN[5],
+    "Sugarcane":  GREEN[1],
+    "Chickpea":   GREEN[2],
+    "Soybean":    GREEN[3],
+    "Onion":      GREEN[4],
+    "Barley":     GREEN[0],
+    "Sorghum":    GREEN[2],
+    "Mustard":    GREEN[3],
+    "Sunflower":  GREEN[4],
+    "Sesame":     GREEN[5],
+    "Mango":      GREEN[1],
+    "Tomato":     GREEN[3],
+    "Potato":     GREEN[5],
+    "Fodder":     GREEN[2],
+    "Groundnut":  GREEN[4],
+    "Other":      GREEN[6]
   },
   seasons: {
-    "Summer": "#cfc62d",
-    "Winter": "#9bb6be",
-    "Autumn": "#f5ef2c",
-    "Spring": "#c3c975"
+    "Summer":  GREEN[0],
+    "Spring":  GREEN[2],
+    "Winter":  GREEN[4],
+    "Autumn":  GREEN[5],
+    "Kharif":  GREEN[1],
+    "Rabi":    GREEN[3],
+    "Zaid":    GREEN[6]
   },
   locations: {
-    "Multan, Punjab": "#313b29",
-    "Gilgit, GB": "#456129",
-    "Sargodha, Punjab": "#5c652b",
-    "Jhang, Punjab": "#64822c",
-    "Sialkot, Punjab": "#888b2c",
-    "Skardu, GB": "#556a72",
-    "Other locations": "#9bb6be"
+    "Multan, Punjab":   GREEN[0],
+    "Gilgit, GB":       GREEN[1],
+    "Lahore, Punjab":   GREEN[2],
+    "Sargodha, Punjab": GREEN[2],
+    "Jhang, Punjab":    GREEN[3],
+    "Sialkot, Punjab":  GREEN[3],
+    "Skardu, GB":       GREEN[4],
+    "Faisalabad, Punjab": GREEN[2],
+    "Islamabad, ICT":   GREEN[3],
+    "Karachi, Sindh":   GREEN[4],
+    "Rawalpindi, Punjab": GREEN[5],
+    "Other locations":  GREEN[6]
   }
 };
 
